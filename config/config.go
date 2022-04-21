@@ -5,6 +5,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
 	"gopos.com/m/authenticator"
+	"os"
 	"time"
 )
 
@@ -51,10 +52,6 @@ func (c *ConfigDatabase) MysqlConn() string {
 	return c.mysqlConn
 }
 
-func (c *ConfigDatabase) PostgreConn() string {
-	return c.dbConn
-}
-
 func (c *ConfigDatabase) RedisConfig() *ConfigRedis {
 	return c.configRedis
 }
@@ -75,19 +72,19 @@ func GetConfigValue(configName string) string {
 }
 
 func newMysqlConn() string {
-	dbUser := GetConfigValue("MYSQLUSER")
-	dbPass := GetConfigValue("MYSQLPASS")
-	dbUrl := GetConfigValue("MYSQLURL")
-	dbPort := GetConfigValue("MYSQLPORT")
-	dbName := GetConfigValue("MYSQLDBNAME")
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, dbUrl, dbPort, dbName)
+	dbUser := os.Getenv("MYSQL_USER")
+	dbPass := os.Getenv("MYSQL_PASSWORD")
+	dbUrl := os.Getenv("MYSQL_HOST")
+	dbPort := os.Getenv("MYSQL_PORT")
+	dbName := os.Getenv("MYSQL_DBNAME")
+	dsn := fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, dbUrl, dbPort, dbName)
 	return dsn
 }
 
 func newRedisConn() *ConfigRedis {
 	return &ConfigRedis{
-		Address:  fmt.Sprintf("%s:%s", GetConfigValue("REDISURL"), GetConfigValue("REDISPORT")),
-		Password: GetConfigValue("REDISPASSWORD"),
+		Address:  fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+		Password: "",
 		Db:       0,
 	}
 }

@@ -6,4 +6,7 @@ import (
 
 func main() {
 	Server().Run()
+	//fmt.Println("test")
+	//DBHOST := os.Getenv("MYSQL_DBNAME")
+	//fmt.Println(DBHOST)
 }

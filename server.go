@@ -35,18 +35,6 @@ func (s *serverConfig) routeGroupApi() {
 	apiTesting := s.gin.Group("/testing")
 	api.NewTestingApi(apiTesting)
 
-	apiProduct := s.gin.Group("/product")
-	api.NewProductApo(apiProduct, s.UseCaseManager.AllProductUseCase())
-
-	apiGroupCustomer := s.gin.Group("/customer")
-	api.NewCustomerApi(apiGroupCustomer, s.UseCaseManager.ListCustomerUseCase())
-
-	apiGroupBoardingRoom := s.gin.Group("boarding_room")
-	api.NewBoardingApi(apiGroupBoardingRoom, s.UseCaseManager.AvailableRoomUseCase())
-
-	apiGroupTransaction := s.gin.Group("transaction")
-	api.NewTransactionApi(apiGroupTransaction, s.UseCaseManager.InsertTransactionUseCase(), s.UseCaseManager.UpdateCustomerUseCase(), s.UseCaseManager.CustomerTransactionUseCase())
-
 	apiLogin := s.gin.Group("login")
 	api.NewLoginApi(apiLogin, s.UseCaseManager.LoginAdminUseCase(), s.ConfigToken)
 }

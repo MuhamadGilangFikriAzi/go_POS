@@ -36,11 +36,9 @@ func (i *infraManager) ConfigToken(tokenConfig authenticator.TokenConfig) authen
 }
 
 func NewInfraManager(configDatabase *config.ConfigDatabase) InfraManager {
-	urlPostgresql := configDatabase.PostgreConn()
 	urlMysql := configDatabase.MysqlConn()
 	redisConfig := configDatabase.RedisConfig()
-	conn, err := sqlx.Connect("mysql", urlPostgresql)
-	connMysql, errMysql := gorm.Open(mysql.Open(urlMysql), &gorm.Config{})
+	conn, err := sqlx.Connect("mysql", urlMysql)
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     redisConfig.Address,
 		Password: redisConfig.Password,
@@ -51,12 +49,8 @@ func NewInfraManager(configDatabase *config.ConfigDatabase) InfraManager {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	if errMysql != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", errMysql)
-		os.Exit(1)
-	}
 	return &infraManager{
-		mysqlConn: connMysql,
+		mysqlConn: conn,
 		redisConn: rdb,
 		ctx:       ctx,
 	}
