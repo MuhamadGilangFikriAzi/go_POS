@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/go-redis/redis/v8"
-	"gopos.com/m/delivery/appresponse"
+	"github.com/jmoiron/sqlx"
+	"gopos.com/m/model"
 	"time"
 )
 
 type Token interface {
-	CreateToken(dataLogin appresponse.LoginResponse) (string, error)
+	CreateToken(dataLogin model.Cashier) (string, error)
 	VerifAccessToken(tokenString string) (jwt.MapClaims, error)
 	GetAppName() string
-	CheckTokenAvailable(tokenString string) (bool, error)
+	CheckTokenAvailable(tokenString string, cashierId interface{}) (bool, error)
 	UpdateToken(tokenString string)
 }
 
@@ -26,7 +26,7 @@ type TokenConfig struct {
 
 type token struct {
 	config TokenConfig
-	rdb    *redis.Client
+	rdb    *sqlx.DB
 	ctx    context.Context
 }
 
@@ -35,29 +35,35 @@ func (t *token) GetAppName() string {
 }
 
 func (t *token) UpdateToken(tokenString string) {
-	t.rdb.Set(t.ctx, "token", tokenString, t.config.AccessTokenDuration)
+	//t.rdb.Set(t.ctx, "token", tokenString, t.config.AccessTokenDuration)
 }
 
-func (t *token) CreateToken(dataLogin appresponse.LoginResponse) (string, error) {
+func (t *token) CreateToken(dataLogin model.Cashier) (string, error) {
 	claims := MyClaims{ // Menyiapkan struct dengan isi yg dibutuhkan
 		StandardClaims: jwt.StandardClaims{
 			Issuer: t.config.AplicationName,
 		},
-		Username: dataLogin.Username,
-		Name:     dataLogin.Name,
+		CashierId: dataLogin.CashierId,
+		Name:      dataLogin.Name,
 	}
 	token := jwt.NewWithClaims(t.config.JwtSignatureMethod, claims) // membuat jwt dengan format method dan claim berupa struct
 	tokenString, err := token.SignedString([]byte(t.config.JwtSignatureKey))
+	//tokenString = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NDkzMTU5NzksInN1YiI6MX0.Eb-zFl9pVL7lmVjJCf74SqUIhfe3VXJ3_uJhTvm7iYc"
 	t.UpdateToken(tokenString)
+	_, errCreate := t.rdb.Query("update cashier set token = ? where cashierId = ?", tokenString, dataLogin.CashierId)
+	if errCreate != nil {
+		return tokenString, errCreate
+	}
 	return tokenString, err // mendapatkan token
 }
 
-func (t *token) CheckTokenAvailable(tokenString string) (bool, error) {
-	tokenAuth, err := t.rdb.Get(t.ctx, "token").Result()
+func (t *token) CheckTokenAvailable(tokenString string, cashierId interface{}) (bool, error) {
+	var data model.Cashier
+	err := t.rdb.Get(&data, "select token from cashier where cashierId = ?", cashierId)
 	if err != nil {
 		return false, err
 	}
-	if tokenString != tokenAuth {
+	if tokenString != data.Token {
 		return false, nil
 	}
 	return true, nil
@@ -76,10 +82,11 @@ func (t *token) VerifAccessToken(tokenString string) (jwt.MapClaims, error) {
 	if !ok || !token.Valid {
 		return nil, err
 	}
+
 	return claims, nil
 }
 
-func NewToken(config TokenConfig, ctx context.Context, rdb *redis.Client) Token {
+func NewToken(config TokenConfig, ctx context.Context, rdb *sqlx.DB) Token {
 	return &token{
 		config,
 		rdb,

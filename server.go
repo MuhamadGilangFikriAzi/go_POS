@@ -35,8 +35,18 @@ func (s *serverConfig) routeGroupApi() {
 	apiTesting := s.gin.Group("/testing")
 	api.NewTestingApi(apiTesting)
 
-	apiLogin := s.gin.Group("login")
-	api.NewLoginApi(apiLogin, s.UseCaseManager.LoginAdminUseCase(), s.ConfigToken)
+	apiCashier := s.gin.Group("cashiers")
+	api.NewLoginApi(apiCashier, s.UseCaseManager.LoginUseCase(), s.ConfigToken)
+	api.NewCashierApi(apiCashier, s.UseCaseManager.CashierUseCase())
+
+	apiCategory := s.gin.Group("categories")
+	api.NewCategoryApi(apiCategory, s.UseCaseManager.CategoryUseCase())
+
+	apiPayment := s.gin.Group("payments")
+	api.NewPaymentApi(apiPayment, s.UseCaseManager.PaymentUsecase())
+
+	apiProduct := s.gin.Group("products")
+	api.NewProductApi(apiProduct, s.UseCaseManager.ProductUseCase())
 }
 
 func (s *serverConfig) Run() {

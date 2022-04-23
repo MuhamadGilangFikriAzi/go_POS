@@ -34,8 +34,8 @@ type ConfigRedis struct {
 func newTokenConfig() authenticator.TokenConfig {
 	//duration, _ := strconv.Atoi(GetConfigValue("JWTDURATION"))
 	return authenticator.TokenConfig{
-		AplicationName:      GetConfigValue("APLICATIONNAME"),
-		JwtSignatureKey:     GetConfigValue("JWTKEY"),
+		AplicationName:      "GO POS",
+		JwtSignatureKey:     "P@ssw0rd",
 		JwtSignatureMethod:  jwt.SigningMethodHS256,
 		AccessTokenDuration: 60 * time.Minute,
 	}
@@ -43,8 +43,8 @@ func newTokenConfig() authenticator.TokenConfig {
 
 func newServerConfig() *ConfigServer {
 	return &ConfigServer{
-		GetConfigValue("SERVERURL"),
-		GetConfigValue("SERVERPORT"),
+		os.Getenv("SERVER_URL"),
+		os.Getenv("SERVER_PORT"),
 	}
 }
 
@@ -77,7 +77,7 @@ func newMysqlConn() string {
 	dbUrl := os.Getenv("MYSQL_HOST")
 	dbPort := os.Getenv("MYSQL_PORT")
 	dbName := os.Getenv("MYSQL_DBNAME")
-	dsn := fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, dbUrl, dbPort, dbName)
+	dsn := fmt.Sprintf("%s:%s@(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbUrl, dbPort, dbName)
 	return dsn
 }
 

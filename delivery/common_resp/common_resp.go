@@ -1,40 +1,34 @@
 package common_resp
 
 type SuccessResponse struct {
-	HttpReponse int         `json:"http_reponse"`
-	RespCode    string      `json:"resp_code"`
-	Status      string      `json:"status"`
-	Message     string      `json:"message"`
-	Data        interface{} `json:"data"`
+	Success bool        `json:"sucess"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 type ErrorResponse struct {
-	HttpResponse int    `json:"http_response"`
-	RespCode     string `json:"resp_code"`
-	Status       string `json:"status"`
-	Message      string `json:"message"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 var (
-	responseSuccess = "00"
-	responseFailed  = "02"
-	statusSuccess   = "success"
-	statusFailed    = "failed"
+	statusSuccess = true
+	statusFailed  = false
+	successMsg    = "Success"
+	failedMsg     = "Failed"
 )
 
 func SuccessMessage(message string, data interface{}) *SuccessResponse {
 	return &SuccessResponse{
-		RespCode: responseSuccess,
-		Status:   statusSuccess,
-		Message:  message,
-		Data:     data,
+		Success: statusSuccess,
+		Message: message,
+		Data:    data,
 	}
 }
 
 func FailedMessage(message string) *ErrorResponse {
 	return &ErrorResponse{
-		RespCode: responseFailed,
-		Status:   statusFailed,
-		Message:  message,
+		Success: statusFailed,
+		Message: message,
 	}
 }

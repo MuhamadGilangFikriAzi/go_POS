@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
 	authenticator2 "gopos.com/m/authenticator"
 	"gopos.com/m/delivery/common_resp"
 	"net/http"
@@ -21,7 +20,7 @@ func NewAuthTokenMiddleware(configToken authenticator2.Token) *AuthTokenMiddlewa
 
 func (a *AuthTokenMiddleware) TokenAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.URL.Path == "/login/admin" || strings.Contains(c.Request.URL.Path, "/files") {
+		if strings.Contains(c.Request.URL.Path, "/passcode") || strings.Contains(c.Request.URL.Path, "/login") {
 			c.Next()
 		} else {
 			h := authHeader{}
@@ -35,22 +34,17 @@ func (a *AuthTokenMiddleware) TokenAuthMiddleware() gin.HandlerFunc {
 				common_resp.NewCommonResp(c).FailedResp(http.StatusUnauthorized, common_resp.FailedMessage("Unautherized"))
 				return
 			}
-			isAvailable, err := a.acctToken.CheckTokenAvailable(tokenString)
-			if err == redis.Nil || !isAvailable {
-				common_resp.NewCommonResp(c).FailedResp(http.StatusUnauthorized, common_resp.FailedMessage("Unautherized"))
-				return
-			}
-			if !isAvailable {
-				common_resp.NewCommonResp(c).FailedResp(http.StatusUnauthorized, common_resp.FailedMessage("Unautherized"))
-				return
-			}
 			token, errToken := a.acctToken.VerifAccessToken(tokenString)
 			if errToken != nil {
 				common_resp.NewCommonResp(c).FailedResp(http.StatusUnauthorized, common_resp.FailedMessage(errToken.Error()))
 				return
 			}
-
-			if token["iss"] == a.acctToken.GetAppName() {
+			condition, err := a.acctToken.CheckTokenAvailable(tokenString, token["cashierId"])
+			if err != nil {
+				common_resp.NewCommonResp(c).FailedResp(http.StatusUnauthorized, common_resp.FailedMessage("Unautherized"))
+				return
+			}
+			if condition {
 				a.acctToken.UpdateToken(tokenString)
 				c.Next()
 			} else {

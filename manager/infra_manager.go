@@ -32,7 +32,7 @@ func (i *infraManager) RedisConn() (context.Context, *redis.Client) {
 }
 
 func (i *infraManager) ConfigToken(tokenConfig authenticator.TokenConfig) authenticator.Token {
-	return authenticator.NewToken(tokenConfig, i.ctx, i.redisConn)
+	return authenticator.NewToken(tokenConfig, i.ctx, i.mysqlConn)
 }
 
 func NewInfraManager(configDatabase *config.ConfigDatabase) InfraManager {

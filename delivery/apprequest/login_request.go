@@ -1,6 +1,5 @@
 package apprequest
 
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Passcode string `json:"passcode" bind:"required"`
 }

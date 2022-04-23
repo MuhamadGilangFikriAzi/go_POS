@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gtuk/discordwebhook"
 	"github.com/rs/zerolog"
-	"gopos.com/m/config"
 	"gopos.com/m/utility"
 	"os"
 )
@@ -23,8 +22,8 @@ func NewLoger(logLevel string) {
 }
 
 func SendLogToDiscord(serve string, errSend error) {
-	var username = config.GetConfigValue("DISCORD_USERNAME")
-	var url = config.GetConfigValue("DISCORD_WEBHOOK_URL")
+	var username = "Log Api Error"
+	var url = "https://discord.com/api/webhooks/961186062586236958/4-EXW7G7eVjZbqsslxH-sVyEOBqc05xOlJiVKqS5xFk96xb8qjOy9HJV_c_OPqeqx93C"
 
 	currentTime := utility.ThisTimeStamp()
 	content := fmt.Sprintf("(%s)\n Serve: %s\n Error: %s", currentTime, serve, errSend.Error())

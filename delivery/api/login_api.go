@@ -5,35 +5,46 @@ import (
 	"gopos.com/m/authenticator"
 	"gopos.com/m/delivery/apprequest"
 	"gopos.com/m/delivery/common_resp"
-	"gopos.com/m/delivery/logger"
 	"gopos.com/m/usecase"
 	"net/http"
+	"strconv"
 )
 
 type loginApi struct {
-	usecase     usecase.LoginAdminUsecase
+	usecase     usecase.LoginUseCase
 	configToken authenticator.Token
 }
 
-func (l *loginApi) LoginAdmin() gin.HandlerFunc {
+func (api *loginApi) GetCashierPasscode() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var dataLogin apprequest.AdminRequest
-		if errBind := c.ShouldBindJSON(&dataLogin); errBind != nil {
-			logger.SendLogToDiscord("Login", errBind)
-			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(errBind.Error()))
-			return
-		}
-		dataAdmin, is_available, err := l.usecase.LoginAdmin(dataLogin)
+		cashierId, _ := strconv.Atoi(c.Param("cashierid"))
+		data, err := api.usecase.GetCashierPasscode(cashierId)
 		if err != nil {
-			logger.SendLogToDiscord("Login", err)
 			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(err.Error()))
 			return
 		}
-		if !is_available {
+		common_resp.NewCommonResp(c).SuccessResp(http.StatusOK, common_resp.SuccessMessage("Success", gin.H{"passcode": data.Passcode}))
+	}
+}
+
+func (api *loginApi) LoginCashier() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var dataLogin apprequest.LoginRequest
+		cashierId, _ := strconv.Atoi(c.Param("cashierid"))
+		if errBind := c.ShouldBindJSON(&dataLogin); errBind != nil {
+			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(errBind.Error()))
+			return
+		}
+		data, isAvailable, err := api.usecase.LoginCashier(cashierId, dataLogin.Passcode)
+		if err != nil {
+			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(err.Error()))
+			return
+		}
+		if isAvailable == 0 {
 			common_resp.NewCommonResp(c).FailedResp(http.StatusUnauthorized, common_resp.FailedMessage("not register"))
 			return
 		}
-		tokenString, errToken := l.configToken.CreateToken(dataAdmin)
+		tokenString, errToken := api.configToken.CreateToken(data)
 		if errToken != nil {
 			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage("Token Failed"))
 			return
@@ -44,11 +55,33 @@ func (l *loginApi) LoginAdmin() gin.HandlerFunc {
 	}
 }
 
-func NewLoginApi(routeGroup *gin.RouterGroup, adminUsecase usecase.LoginAdminUsecase, configToken authenticator.Token) {
+func (api *loginApi) LogoutCashier() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var dataLogin apprequest.LoginRequest
+		cashierId, _ := strconv.Atoi(c.Param("cashierid"))
+		if errBind := c.ShouldBindJSON(&dataLogin); errBind != nil {
+			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(errBind.Error()))
+			return
+		}
+		isAvailable, err := api.usecase.LogoutCashier(cashierId, dataLogin.Passcode)
+		if err != nil {
+			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(err.Error()))
+			return
+		}
+		if isAvailable == 0 {
+			common_resp.NewCommonResp(c).FailedResp(http.StatusUnauthorized, common_resp.FailedMessage("not register"))
+			return
+		}
+		common_resp.NewCommonResp(c).SuccessResp(http.StatusOK, common_resp.SuccessMessage("Success", ""))
+	}
+}
+
+func NewLoginApi(routeGroup *gin.RouterGroup, usecase usecase.LoginUseCase, configToken authenticator.Token) {
 	api := &loginApi{
-		adminUsecase,
+		usecase,
 		configToken,
 	}
-
-	routeGroup.POST("/admin", api.LoginAdmin())
+	routeGroup.GET("/:cashierid/passcode", api.GetCashierPasscode())
+	routeGroup.POST("/:cashierid/login", api.LoginCashier())
+	routeGroup.POST("/:cashierid/logout", api.LogoutCashier())
 }
