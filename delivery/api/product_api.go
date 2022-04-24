@@ -18,7 +18,9 @@ func (api *productApi) GetAllProduct() gin.HandlerFunc {
 		var dataMeta apprequest.Meta
 		dataMeta.Limit, _ = strconv.Atoi(c.Query("limit"))
 		dataMeta.Skip, _ = strconv.Atoi(c.Query("skip"))
-		data, respMeta, err := api.usecase.GetAllProduct(dataMeta)
+		categoryId, _ := strconv.Atoi(c.Query("cateogryId"))
+		searchQuery := c.Query("q")
+		data, respMeta, err := api.usecase.GetAllProduct(dataMeta, categoryId, searchQuery)
 		if err != nil {
 			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(err.Error()))
 			return
@@ -46,20 +48,16 @@ func (api *productApi) CreateProduct() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data apprequest.ProductRequest
 		err := c.ShouldBindJSON(&data)
-		//fmt.Println(data)
-		//fmt.Println(time.Now().Format(data.Diskon.ExpiredAt))
-		common_resp.NewCommonResp(c).SuccessResp(http.StatusOK, common_resp.SuccessMessage("Success", data))
-
 		if err != nil {
 			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(err.Error()))
 			return
 		}
-		//dataCreate, err := api.usecase.CreateProduct(data)
-		//if err != nil {
-		//	common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(err.Error()))
-		//	return
-		//}
-		//common_resp.NewCommonResp(c).SuccessResp(http.StatusOK, common_resp.SuccessMessage("Success", dataCreate))
+		dataCreate, err := api.usecase.CreateProduct(data)
+		if err != nil {
+			common_resp.NewCommonResp(c).FailedResp(http.StatusInternalServerError, common_resp.FailedMessage(err.Error()))
+			return
+		}
+		common_resp.NewCommonResp(c).SuccessResp(http.StatusOK, common_resp.SuccessMessage("Success", dataCreate))
 	}
 }
 

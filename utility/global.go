@@ -2,9 +2,16 @@ package utility
 
 import (
 	"fmt"
+	"github.com/leekchan/accounting"
 	"golang.org/x/crypto/bcrypt"
+	"strconv"
 	"strings"
 	"time"
+)
+
+const (
+	layoutISO = "2006-01-02"
+	layoutUS  = "January 2, 2006"
 )
 
 func AddZeroAndToString(number int) string {
@@ -24,6 +31,24 @@ func ThisDay() string {
 
 func ThisTimeStamp() string {
 	return time.Now().Local().Format("2006-01-02 15:04:05")
+}
+
+func CunrrencyFormat(currency string, number int) string {
+	ac := accounting.NewAccounting(currency, 0, ".", ",", "%s %v", "%s (%v)", "%s --")
+	return ac.FormatMoney(number)
+}
+
+func DaysFormat(days *time.Time) string {
+	return days.Format(layoutUS)
+}
+
+func TimeUnixFormat(number int) *time.Time {
+	i, err := strconv.ParseInt(fmt.Sprintf("%d", number), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	tm := time.Unix(i, 0)
+	return &tm
 }
 
 func ThisTimeStampCode() string {

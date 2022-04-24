@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Product struct {
 	ProductId  int        `db:"productId" json:"productId,omitempty"`
@@ -14,4 +16,6 @@ type Product struct {
 	CreatedAt  *time.Time `db:"createdAt" json:"createdAt,omitempty"`
 	UpdatedAt  *time.Time `db:"updatedAt" json:"updatedAt,omitempty"`
 	DeteledAt  *time.Time `db:"deletedAt" json:"deletedAt,omitempty"`
+	DiscountId int        `db:"discountId" json:"discountId"`
+	Discount   Discount   `json:"discount"`
 }
